@@ -1,0 +1,17 @@
+{
+  "name": "nocopyrightsounds-widget",
+  "version": "1.0.0",
+  "description": "Un widget musical persistant pour site web utilisant l'API NoCopyrightSounds",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/floriangobin/nocopyrightsounds-widget.git"
+  },
+  "keywords": ["ncs", "music", "widget", "audio", "player", "nocopyrightsounds"],
+  "author": "GOBIN Florian",
+  "license": "MIT"
+}
