@@ -15,6 +15,6 @@ import NCSWidget from 'nocopyrightsounds-widget';
 
 const widget = new NCSWidget({
     position: 'bottom-right', // 'bottom-left', 'top-right', 'top-left'
-    apiUrl: 'https://ncs-api.kaninchenspeed.workers.dev' // L'URL de votre API
+    apiUrl: 'https://ncs-backend-api.onrender.com' // L'URL de votre API
 });
 \`\`\`
