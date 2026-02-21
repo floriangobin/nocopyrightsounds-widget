@@ -4,12 +4,13 @@ class NCSWidget {
     constructor(userOptions = {}) {
         const defaultOptions = {
             position: 'bottom-right',
-            apiUrl: 'https://ncs-backend-api.onrender.com', // 🔗 Votre API officielle fixée !
+            apiUrl: 'https://ncs-backend-api.onrender.com', 
             theme: 'dark',
             primaryColor: '#1DB954',
             defaultGenre: 'all',
             startVolume: 0.5,
-            offset: '25px',
+            offsetX: '25px', // Séparé pour plus de précision (ex: gauche/droite)
+            offsetY: '25px', // Séparé (ex: haut/bas)
             zIndex: 99999,
             glassmorphism: false,
             borderRadius: '16px',
@@ -18,12 +19,13 @@ class NCSWidget {
             hideVisualizer: false,
             autoOpen: false,
             
-            // --- 🎛️ NOUVEAUTÉS V1.3.0 : Bouton Réduit ---
-            minimizedIcon: '🎧',         // L'icône par défaut
-            minimizedSize: '55px',       // Taille du bouton
-            minimizedRadius: '50%',      // Arrondi (50% = rond, 10px = carré arrondi)
-            minimizedBg: null,           // Surcharger la couleur de fond (utilise primaryColor sinon)
-            minimizedColor: '#ffffff'    // Couleur de l'icône
+            // 🎛️ Bouton Réduit Ultra-Configurable
+            minimizedIcon: '🎧',
+            minWidth: '55px',        // Largeur séparée
+            minHeight: '55px',       // Hauteur séparée
+            minRadius: '50%',
+            minBg: null,
+            minColor: '#ffffff'
         };
 
         this.options = { ...defaultOptions, ...userOptions };
@@ -49,11 +51,7 @@ class NCSWidget {
             this.savedArtists = localStorage.getItem('ncs_currentArtists') || null;
             
             const savedState = localStorage.getItem('ncs_isOpen');
-            if (savedState !== null) {
-                this.isWidgetOpen = savedState === 'true';
-            } else {
-                this.isWidgetOpen = this.options.autoOpen;
-            }
+            this.isWidgetOpen = savedState !== null ? savedState === 'true' : this.options.autoOpen;
         }
 
         this.initDOM();
@@ -73,6 +71,8 @@ class NCSWidget {
 
         this.container = document.createElement('div');
         this.container.id = 'ncs-persistent-widget';
+        // Ajout d'une classe globale si le widget est ouvert dès le départ
+        if(this.isWidgetOpen) this.container.classList.add('ncs-is-open');
         
         const isLight = this.options.theme === 'light';
         const baseBgColor = isLight ? '255, 255, 255' : '24, 24, 24';
@@ -104,25 +104,27 @@ class NCSWidget {
                 --ncs-radius: ${this.options.borderRadius};
                 --ncs-font: ${this.options.fontFamily};
                 
-                /* Variables Bouton Réduit */
-                --ncs-min-size: ${this.options.minimizedSize};
-                --ncs-min-radius: ${this.options.minimizedRadius};
-                --ncs-min-bg: ${this.options.minimizedBg || this.options.primaryColor};
-                --ncs-min-color: ${this.options.minimizedColor};
+                --ncs-min-w: ${this.options.minWidth};
+                --ncs-min-h: ${this.options.minHeight};
+                --ncs-min-radius: ${this.options.minRadius};
+                --ncs-min-bg: ${this.options.minBg || this.options.primaryColor};
+                --ncs-min-color: ${this.options.minColor};
+                --ncs-cover-img: url(''); /* Injecté en JS pour le design Vinyle */
                 
                 position: fixed;
                 ${this.getPositionStyles()}
                 z-index: ${this.options.zIndex};
                 font-family: var(--ncs-font);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
-            .ncs-minimized { width: var(--ncs-min-size); height: var(--ncs-min-size); border-radius: var(--ncs-min-radius); background: var(--ncs-min-bg); cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0, 0.2); font-size: calc(var(--ncs-min-size) * 0.45); transition: transform 0.2s; color: var(--ncs-min-color); }
+            .ncs-minimized { width: var(--ncs-min-w); height: var(--ncs-min-h); border-radius: var(--ncs-min-radius); background: var(--ncs-min-bg); cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0, 0.2); font-size: calc(min(var(--ncs-min-w), var(--ncs-min-h)) * 0.45); transition: all 0.3s ease; color: var(--ncs-min-color); overflow: hidden; background-size: cover; background-position: center; }
             .ncs-minimized:hover { transform: scale(1.05); }
-            .ncs-minimized.hidden { display: none; }
+            /* Transition plus douce pour l'affichage */
+            .ncs-minimized.hidden { opacity: 0; pointer-events: none; position: absolute; }
             
-            .ncs-expanded { width: 320px; background: var(--ncs-bg); color: var(--ncs-text); border-radius: var(--ncs-radius); padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; border: 1px solid var(--ncs-border); backdrop-filter: ${backdropFilter}; -webkit-backdrop-filter: ${backdropFilter}; }
-            .ncs-expanded.active { display: block; animation: ncsFadeIn 0.3s ease; }
+            .ncs-expanded { width: 320px; background: var(--ncs-bg); color: var(--ncs-text); border-radius: var(--ncs-radius); padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); opacity: 0; pointer-events: none; position: absolute; bottom: 0; right: 0; border: 1px solid var(--ncs-border); backdrop-filter: ${backdropFilter}; -webkit-backdrop-filter: ${backdropFilter}; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: translateY(20px) scale(0.95); }
+            /* Effet Tiroir par défaut lors de l'ouverture */
+            .ncs-expanded.active { opacity: 1; pointer-events: auto; position: relative; transform: translateY(0) scale(1); }
             
             .ncs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
             .ncs-header strong { font-size: 14px; font-weight: 600; color: var(--ncs-text-muted); letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
@@ -160,19 +162,16 @@ class NCSWidget {
             .ncs-volume-container { display: flex; align-items: center; gap: 8px; color: var(--ncs-text-muted); flex: 1; margin-right: 15px; }
             #ncs-mute-btn { cursor: pointer; transition: transform 0.1s; user-select: none; }
             #ncs-mute-btn:hover { transform: scale(1.1); }
-            
             .ncs-download-btn { display: ${this.options.hideDownload ? 'none' : 'block'}; color: var(--ncs-text-muted); text-decoration: none; font-size: 18px; transition: color 0.2s; }
             .ncs-download-btn:hover { color: var(--ncs-primary); }
-            
-            @keyframes ncsFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         `;
 
-        const genresOptionsHTML = ncsGenres.map(genre => 
-            `<option value="${genre.value}">${genre.label}</option>`
-        ).join('');
+        const genresOptionsHTML = ncsGenres.map(genre => `<option value="${genre.value}">${genre.label}</option>`).join('');
 
         this.container.innerHTML = `
-            <div class="ncs-minimized ${this.isWidgetOpen ? 'hidden' : ''}">${this.options.minimizedIcon}</div>
+            <div class="ncs-minimized ${this.isWidgetOpen ? 'hidden' : ''}">
+                <span class="ncs-min-content">${this.options.minimizedIcon}</span>
+            </div>
             <div class="ncs-expanded ${this.isWidgetOpen ? 'active' : ''}">
                 <div class="ncs-header">
                     <strong>NCS Player
@@ -188,9 +187,7 @@ class NCSWidget {
                     <div class="ncs-details">
                         <div id="ncs-track-name">Chargement...</div>
                         <div id="ncs-artists">Artiste(s)</div>
-                        <select id="ncs-genre">
-                            ${genresOptionsHTML}
-                        </select>
+                        <select id="ncs-genre">${genresOptionsHTML}</select>
                     </div>
                 </div>
 
@@ -238,12 +235,13 @@ class NCSWidget {
     }
 
     getPositionStyles() {
-        const offset = this.options.offset;
+        const x = this.options.offsetX;
+        const y = this.options.offsetY;
         const positions = {
-            'bottom-right': `bottom: ${offset}; right: ${offset};`,
-            'bottom-left': `bottom: ${offset}; left: ${offset};`,
-            'top-right': `top: ${offset}; right: ${offset};`,
-            'top-left': `top: ${offset}; left: ${offset};`
+            'bottom-right': `bottom: ${y}; right: ${x};`,
+            'bottom-left': `bottom: ${y}; left: ${x};`,
+            'top-right': `top: ${y}; right: ${x};`,
+            'top-left': `top: ${y}; left: ${x};`
         };
         return positions[this.options.position] || positions['bottom-right'];
     }
@@ -263,11 +261,13 @@ class NCSWidget {
             this.playBtn.innerHTML = '⏸';
             this.playBtn.classList.add('paused');
             this.visualizer.classList.add('playing');
+            this.container.classList.add('ncs-is-playing'); // 🎵 CLASSE MAGIQUE POUR LES DESIGNERS
         });
         this.audio.addEventListener('pause', () => {
             this.playBtn.innerHTML = '▶';
             this.playBtn.classList.remove('paused');
             this.visualizer.classList.remove('playing');
+            this.container.classList.remove('ncs-is-playing');
         });
         this.audio.addEventListener('timeupdate', () => this.updateProgress());
         this.audio.addEventListener('loadedmetadata', () => {
@@ -320,9 +320,11 @@ class NCSWidget {
         if (isOpen) {
             this.minimized.classList.add('hidden');
             this.expanded.classList.add('active');
+            this.container.classList.add('ncs-is-open');
         } else {
             this.minimized.classList.remove('hidden');
             this.expanded.classList.remove('active');
+            this.container.classList.remove('ncs-is-open');
         }
         localStorage.setItem('ncs_isOpen', isOpen);
     }
@@ -397,7 +399,11 @@ class NCSWidget {
         this.audio.src = this.savedTrack;
         this.trackName.innerText = this.savedTitle;
         this.artistsName.innerText = this.savedArtists || "NCS Release";
-        if (this.savedCover) this.coverImg.src = this.savedCover;
+        if (this.savedCover) {
+            this.coverImg.src = this.savedCover;
+            // Injecter l'image dans le CSS pour les hackers de design !
+            this.container.style.setProperty('--ncs-cover-img', `url('${this.savedCover}')`);
+        }
         this.downloadBtn.href = this.savedTrack;
         
         this.trackHistory = [{
@@ -417,7 +423,11 @@ class NCSWidget {
         this.artistsName.innerText = artistes;
         this.artistsName.title = artistes;
         
-        if (track.coverUrl) this.coverImg.src = track.coverUrl;
+        if (track.coverUrl) {
+            this.coverImg.src = track.coverUrl;
+            // 💿 INJECTION POUR LE HACK VINYLE :
+            this.container.style.setProperty('--ncs-cover-img', `url('${track.coverUrl}')`);
+        }
         this.downloadBtn.href = track.audioUrl;
         
         if (addToHistory) {
