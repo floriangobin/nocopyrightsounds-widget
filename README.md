@@ -15,10 +15,10 @@ Conçu pour les développeurs modernes : léger, persistant entre les changement
 
 * ⚡ **Zéro Latence :** Algorithme de préchargement (buffering) intelligent en arrière-plan pour des transitions instantanées entre les morceaux.
 * 💾 **Persistance d'état :** Mémorise la piste en cours, le volume, la progression et l'état d'ouverture du widget d'une page à l'autre via `localStorage`.
-* 🎨 **Thèmes & Couleurs :** Support natif des modes clair (`light`) et sombre (`dark`), avec personnalisation de la couleur principale.
+* 🎨 **Design Premium :** Support natif des modes clair/sombre, personnalisation des couleurs, et effet **Glassmorphism** (verre dépoli).
 * 🎛️ **Contrôles Complets :** Boutons Suivant/Précédent avec historique, contrôle du volume, Mute, et barre de progression cliquable.
-* 🎵 **+60 Genres :** Navigation aléatoire intelligente parmi tout le catalogue historique de NCS (House, Dubstep, Chill, etc.).
-* ⬇️ **Téléchargement :** Bouton intégré pour récupérer directement le fichier MP3 officiel.
+* 🎵 **Catalogue Complet :** Navigation aléatoire intelligente parmi les 60+ genres historiques de NCS.
+* 👁️ **UI Modulaire :** Possibilité de masquer des éléments (téléchargement, visualizer) pour un rendu minimaliste.
 
 ---
 
@@ -40,51 +40,35 @@ npm install nocopyrightsounds-widget
 
 ## 🚀 Utilisation Rapide
 
-### Exemple en Vanilla JS (HTML)
+### Exemple basique
 \`\`\`html
-<body>
-    <script type="module">
-        import NCSWidget from 'https://cdn.jsdelivr.net/npm/nocopyrightsounds-widget@latest/src/index.js';
-
-        // Initialisation basique
-        const player = new NCSWidget();
-    </script>
-</body>
+<script type="module">
+    import NCSWidget from 'https://cdn.jsdelivr.net/npm/nocopyrightsounds-widget@latest/src/index.js';
+    const player = new NCSWidget();
+</script>
 \`\`\`
 
-### Exemple dans React (Next.js, Vite...)
-\`\`\`jsx
-import { useEffect } from 'react';
-import NCSWidget from 'nocopyrightsounds-widget';
-
-export default function App() {
-  useEffect(() => {
-    const widget = new NCSWidget({
-      position: 'bottom-right',
-      theme: 'dark',
-      primaryColor: '#1DB954'
-    });
-
-    // Nettoyage lors du démontage du composant
-    return () => {
-      const el = document.getElementById('ncs-persistent-widget');
-      if (el) el.remove();
-    };
-  }, []);
-
-  return (
-    <div>
-      <h1>Mon Super Site</h1>
-    </div>
-  );
-}
+### Exemple Avancé (Toutes les options)
+\`\`\`javascript
+const widget = new NCSWidget({
+    position: 'bottom-left', // 'bottom-right', 'top-left', 'top-right'
+    offset: '30px',          // Distance par rapport au bord de l'écran
+    theme: 'dark',           // 'dark' ou 'light'
+    primaryColor: '#9d4edd', // Couleur principale (ex: Violet)
+    glassmorphism: true,     // Active l'effet de transparence floutée
+    borderRadius: '12px',    // Arrondi de la fenêtre
+    fontFamily: "'Courier New', monospace", // Police d'écriture personnalisée
+    defaultGenre: '10',      // Démarre sur la House (ID: 10)
+    startVolume: 0.3,        // Volume initial à 30%
+    hideDownload: true,      // Cache le bouton de téléchargement
+    hideVisualizer: false,   // Garde l'animation sonore
+    autoOpen: true           // Ouvre le lecteur automatiquement à la 1ère visite
+});
 \`\`\`
 
 ---
 
-## ⚙️ Configuration (Options de l'objet)
-
-Vous pouvez passer un objet d'options au constructeur pour personnaliser le comportement du widget :
+## ⚙️ Configuration Détaillée (Options)
 
 | Option | Type | Défaut | Description |
 | :--- | :--- | :--- | :--- |
@@ -92,26 +76,27 @@ Vous pouvez passer un objet d'options au constructeur pour personnaliser le comp
 | \`offset\` | String | \`'25px'\` | Marge par rapport au bord de l'écran. |
 | \`theme\` | String | \`'dark'\` | Thème de base de l'interface (\`'dark'\` ou \`'light'\`). |
 | \`primaryColor\` | String | \`'#1DB954'\` | Couleur principale (Bouton d'ouverture, slider, visualizer). |
+| \`glassmorphism\`| Boolean | \`false\` | Active un fond semi-transparent avec flou d'arrière-plan (backdrop-filter). |
+| \`borderRadius\` | String | \`'16px'\` | Rayon des bordures du lecteur étendu. |
+| \`fontFamily\` | String | \`'system-ui...'\`| Typographie utilisée dans tout le widget. |
+| \`hideDownload\` | Boolean | \`false\` | Masque l'icône de téléchargement direct. |
+| \`hideVisualizer\`| Boolean | \`false\` | Masque les 3 barres animées à côté du titre. |
+| \`autoOpen\` | Boolean | \`false\` | Déploie le widget automatiquement lors de la première visite. |
 | \`defaultGenre\` | String | \`'all'\` | L'ID du genre au démarrage (ex: \`'10'\` pour House). |
 | \`startVolume\` | Number | \`0.5\` | Volume initial entre 0.0 et 1.0 (surchargé si l'utilisateur a déjà un cache). |
-| \`zIndex\` | Number | \`99999\` | Profondeur d'affichage CSS (z-index). |
-| \`apiUrl\` | String | *https://www.wordreference.com/definition/interne* | URL de l'API Backend. Vous pouvez héberger la vôtre si besoin. |
+| \`apiUrl\` | String | *https://www.wordreference.com/definition/interne* | URL de l'API Backend. |
 
 ---
 
 ## 🎨 Personnalisation CSS Avancée
 
-Si les options du constructeur ne suffisent pas, le widget expose des **Variables CSS** (Custom Properties) rattachées à l'ID `#ncs-persistent-widget`. Vous pouvez les surcharger directement dans la feuille de style de votre site :
+Le widget expose des **Variables CSS** (Custom Properties) rattachées à l'ID `#ncs-persistent-widget`. Vous pouvez les surcharger directement dans la feuille de style de votre site :
 
 \`\`\`css
-/* Dans le fichier style.css de votre site web */
 #ncs-persistent-widget {
-    --ncs-bg: #000000;          /* Fond du widget (Noir pur) */
+    --ncs-bg: #000000;          /* Fond du widget */
     --ncs-border: #333333;      /* Couleur de la bordure */
-    --ncs-primary: #ff0055;     /* Remplace le vert par du rose fluo */
-    --ncs-panel-bg: #111111;    /* Fond des éléments internes (images, selects) */
-    font-family: 'Roboto', sans-serif; /* Changement de police */
-    border-radius: 0px;         /* Retirer les coins arrondis */
+    --ncs-panel-bg: #111111;    /* Fond des listes et des images */
 }
 \`\`\`
 
@@ -119,10 +104,7 @@ Si les options du constructeur ne suffisent pas, le widget expose des **Variable
 
 ## 🏗️ Architecture & Backend
 
-En raison des restrictions CORS strictes sur le web moderne, un navigateur web ne peut pas interroger directement le site de NCS. 
-Ce widget s'appuie donc sur une API Backend Node.js qui sert de relais de données (Proxy). 
-
-*Note : Une API publique par défaut est fournie avec ce widget pour un usage immédiat. Pour des environnements de production à fort trafic, il est recommandé de déployer votre propre instance du serveur relais.*
+En raison des restrictions CORS strictes sur le web moderne, un navigateur web ne peut pas interroger directement le site de NCS. Ce widget s'appuie donc sur une API Backend Node.js qui sert de relais de données (Proxy). 
 
 ---
 

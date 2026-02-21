@@ -1,15 +1,24 @@
+import { ncsGenres } from './genres.js';
+
 class NCSWidget {
     constructor(userOptions = {}) {
-        // 🛠️ 1. Configurations par défaut (Fusionnées avec les choix de l'utilisateur)
+        // 🛠️ 1. Les TOUTES NOUVELLES options de personnalisation
         const defaultOptions = {
             position: 'bottom-right',
             apiUrl: 'https://VOTRE-URL-RENDER.onrender.com', // ⚠️ METTEZ VOTRE URL RENDER ICI
-            theme: 'dark', // 'dark' ou 'light'
-            primaryColor: '#1DB954', // Vert NCS par défaut
+            theme: 'dark',
+            primaryColor: '#1DB954',
             defaultGenre: 'all',
             startVolume: 0.5,
-            offset: '25px', // Distance par rapport au bord de l'écran
-            zIndex: 99999
+            offset: '25px',
+            zIndex: 99999,
+            // --- NOUVEAUTÉS V1.2.0 ---
+            glassmorphism: false, // Active l'effet verre dépoli
+            borderRadius: '16px', // Arrondi des angles du panneau
+            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            hideDownload: false,  // Masquer le bouton de téléchargement
+            hideVisualizer: false,// Masquer les barres animées
+            autoOpen: false       // Ouvrir le widget par défaut à la 1ère visite
         };
 
         this.options = { ...defaultOptions, ...userOptions };
@@ -33,7 +42,14 @@ class NCSWidget {
             this.savedCover = localStorage.getItem('ncs_currentCover') || null;
             this.savedTitle = localStorage.getItem('ncs_currentTitle') || null;
             this.savedArtists = localStorage.getItem('ncs_currentArtists') || null;
-            this.isWidgetOpen = localStorage.getItem('ncs_isOpen') === 'true';
+            
+            // Logique d'auto-ouverture : on priorise le choix sauvegardé, sinon l'option autoOpen
+            const savedState = localStorage.getItem('ncs_isOpen');
+            if (savedState !== null) {
+                this.isWidgetOpen = savedState === 'true';
+            } else {
+                this.isWidgetOpen = this.options.autoOpen;
+            }
         }
 
         this.initDOM();
@@ -43,7 +59,6 @@ class NCSWidget {
             this.restoreTrack();
             this.fillQueue(this.genreSelect.value);
         } else {
-            // Utiliser le genre par défaut défini dans les options
             this.genreSelect.value = this.options.defaultGenre;
             this.changeGenre(this.options.defaultGenre);
         }
@@ -55,14 +70,18 @@ class NCSWidget {
         this.container = document.createElement('div');
         this.container.id = 'ncs-persistent-widget';
         
-        // 🎨 2. Application du thème (Variables CSS dynamiques)
         const isLight = this.options.theme === 'light';
+        
+        // 🎨 Gestion dynamique des couleurs pour le Glassmorphism
+        const baseBgColor = isLight ? '255, 255, 255' : '24, 24, 24';
+        const finalBg = this.options.glassmorphism ? `rgba(${baseBgColor}, 0.75)` : (isLight ? '#ffffff' : '#181818');
+        const backdropFilter = this.options.glassmorphism ? 'blur(12px)' : 'none';
+
         const colors = {
-            bg: isLight ? '#ffffff' : '#181818',
             text: isLight ? '#222222' : '#ffffff',
             textMuted: isLight ? '#666666' : '#b3b3b3',
-            border: isLight ? '#e0e0e0' : '#282828',
-            panelBg: isLight ? '#f5f5f5' : '#282828',
+            border: this.options.glassmorphism ? `rgba(${isLight ? '0,0,0' : '255,255,255'}, 0.1)` : (isLight ? '#e0e0e0' : '#282828'),
+            panelBg: this.options.glassmorphism ? `rgba(${isLight ? '0,0,0' : '255,255,255'}, 0.05)` : (isLight ? '#f5f5f5' : '#282828'),
             sliderBg: isLight ? '#d3d3d3' : '#535353',
             btnBg: isLight ? '#222222' : '#ffffff',
             btnColor: isLight ? '#ffffff' : '#000000'
@@ -71,9 +90,8 @@ class NCSWidget {
         const style = document.createElement('style');
         style.textContent = `
             #ncs-persistent-widget {
-                /* Variables CSS exposées pour les développeurs */
                 --ncs-primary: ${this.options.primaryColor};
-                --ncs-bg: ${colors.bg};
+                --ncs-bg: ${finalBg};
                 --ncs-text: ${colors.text};
                 --ncs-text-muted: ${colors.textMuted};
                 --ncs-border: ${colors.border};
@@ -81,11 +99,13 @@ class NCSWidget {
                 --ncs-slider-bg: ${colors.sliderBg};
                 --ncs-btn-bg: ${colors.btnBg};
                 --ncs-btn-color: ${colors.btnColor};
+                --ncs-radius: ${this.options.borderRadius};
+                --ncs-font: ${this.options.fontFamily};
                 
                 position: fixed;
                 ${this.getPositionStyles()}
                 z-index: ${this.options.zIndex};
-                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                font-family: var(--ncs-font);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
@@ -93,7 +113,7 @@ class NCSWidget {
             .ncs-minimized:hover { transform: scale(1.1); }
             .ncs-minimized.hidden { display: none; }
             
-            .ncs-expanded { width: 320px; background: var(--ncs-bg); color: var(--ncs-text); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; border: 1px solid var(--ncs-border); }
+            .ncs-expanded { width: 320px; background: var(--ncs-bg); color: var(--ncs-text); border-radius: var(--ncs-radius); padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; border: 1px solid var(--ncs-border); backdrop-filter: ${backdropFilter}; -webkit-backdrop-filter: ${backdropFilter}; }
             .ncs-expanded.active { display: block; animation: ncsFadeIn 0.3s ease; }
             
             .ncs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -101,7 +121,8 @@ class NCSWidget {
             .ncs-close-btn { background: transparent; border: none; color: var(--ncs-text-muted); font-size: 18px; cursor: pointer; padding: 0; transition: color 0.2s; }
             .ncs-close-btn:hover { color: var(--ncs-text); }
             
-            .ncs-visualizer { display: flex; gap: 2px; height: 12px; align-items: flex-end; opacity: 0; transition: opacity 0.3s; }
+            /* Masquage conditionnel du Visualizer */
+            .ncs-visualizer { display: ${this.options.hideVisualizer ? 'none' : 'flex'}; gap: 2px; height: 12px; align-items: flex-end; opacity: 0; transition: opacity 0.3s; }
             .ncs-visualizer.playing { opacity: 1; }
             .ncs-bar { width: 3px; background: var(--ncs-primary); border-radius: 2px; animation: bounce 0.5s infinite alternate; }
             .ncs-bar:nth-child(2) { animation-delay: 0.15s; }
@@ -109,7 +130,7 @@ class NCSWidget {
             @keyframes bounce { from { height: 3px; } to { height: 12px; } }
             
             .ncs-track-info { display: flex; align-items: center; margin-bottom: 15px; }
-            .ncs-cover { width: 65px; height: 65px; border-radius: 8px; background: var(--ncs-panel-bg); margin-right: 15px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+            .ncs-cover { width: 65px; height: 65px; border-radius: calc(var(--ncs-radius) / 2); background: var(--ncs-panel-bg); margin-right: 15px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
             .ncs-details { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
             #ncs-track-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
             #ncs-artists { font-size: 11px; color: var(--ncs-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
@@ -132,11 +153,17 @@ class NCSWidget {
             .ncs-volume-container { display: flex; align-items: center; gap: 8px; color: var(--ncs-text-muted); flex: 1; margin-right: 15px; }
             #ncs-mute-btn { cursor: pointer; transition: transform 0.1s; user-select: none; }
             #ncs-mute-btn:hover { transform: scale(1.1); }
-            .ncs-download-btn { color: var(--ncs-text-muted); text-decoration: none; font-size: 18px; transition: color 0.2s; }
+            
+            /* Masquage conditionnel du bouton Téléchargement */
+            .ncs-download-btn { display: ${this.options.hideDownload ? 'none' : 'block'}; color: var(--ncs-text-muted); text-decoration: none; font-size: 18px; transition: color 0.2s; }
             .ncs-download-btn:hover { color: var(--ncs-primary); }
             
             @keyframes ncsFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         `;
+
+        const genresOptionsHTML = ncsGenres.map(genre => 
+            `<option value="${genre.value}">${genre.label}</option>`
+        ).join('');
 
         this.container.innerHTML = `
             <div class="ncs-minimized ${this.isWidgetOpen ? 'hidden' : ''}">🎧</div>
@@ -156,16 +183,8 @@ class NCSWidget {
                         <div id="ncs-track-name">Chargement...</div>
                         <div id="ncs-artists">Artiste(s)</div>
                         <select id="ncs-genre">
-                            <option value="all">🌍 Tous les genres</option>
-                            <option value="31">Alternative Dance</option>
-                            <option value="10">House</option>
-                            <option value="2">Chill</option>
-                            <option value="5">Dubstep</option>
-                            <option value="7">Electronic</option>
-                            <option value="3">Drum & Bass</option>
-                            <option value="9">Hardstyle</option>
-                            <option value="14">Trap</option>
-                            </select>
+                            ${genresOptionsHTML}
+                        </select>
                     </div>
                 </div>
 
@@ -194,7 +213,6 @@ class NCSWidget {
         document.head.appendChild(style);
         document.body.appendChild(this.container);
 
-        // Références
         this.minimized = this.container.querySelector('.ncs-minimized');
         this.expanded = this.container.querySelector('.ncs-expanded');
         this.playBtn = this.container.querySelector('#ncs-play-pause');
