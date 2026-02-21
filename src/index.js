@@ -1,7 +1,18 @@
 class NCSWidget {
-    constructor(options = {}) {
-        this.position = options.position || 'bottom-right';
-        this.apiUrl = options.apiUrl || 'https://ncs-backend-api.onrender.com'; // ⚠️ METTEZ VOTRE URL RENDER ICI
+    constructor(userOptions = {}) {
+        // 🛠️ 1. Configurations par défaut (Fusionnées avec les choix de l'utilisateur)
+        const defaultOptions = {
+            position: 'bottom-right',
+            apiUrl: 'https://VOTRE-URL-RENDER.onrender.com', // ⚠️ METTEZ VOTRE URL RENDER ICI
+            theme: 'dark', // 'dark' ou 'light'
+            primaryColor: '#1DB954', // Vert NCS par défaut
+            defaultGenre: 'all',
+            startVolume: 0.5,
+            offset: '25px', // Distance par rapport au bord de l'écran
+            zIndex: 99999
+        };
+
+        this.options = { ...defaultOptions, ...userOptions };
         
         this.audio = new Audio();
         this.isPlaying = false;
@@ -13,10 +24,9 @@ class NCSWidget {
         
         this.isBrowser = typeof window !== 'undefined';
         if (this.isBrowser) {
-            // Le volume est à 1 (100%) par défaut s'il n'y a rien en cache
             const savedVol = localStorage.getItem('ncs_volume');
-            this.audio.volume = savedVol !== null ? parseFloat(savedVol) : 1.0;
-            this.lastVolume = this.audio.volume > 0 ? this.audio.volume : 1.0; // Pour le mute/unmute
+            this.audio.volume = savedVol !== null ? parseFloat(savedVol) : this.options.startVolume;
+            this.lastVolume = this.audio.volume > 0 ? this.audio.volume : this.options.startVolume;
             
             this.savedTime = localStorage.getItem('ncs_currentTime') || 0;
             this.savedTrack = localStorage.getItem('ncs_currentTrack') || null;
@@ -33,7 +43,9 @@ class NCSWidget {
             this.restoreTrack();
             this.fillQueue(this.genreSelect.value);
         } else {
-            this.changeGenre(this.genreSelect.value);
+            // Utiliser le genre par défaut défini dans les options
+            this.genreSelect.value = this.options.defaultGenre;
+            this.changeGenre(this.options.defaultGenre);
         }
     }
 
@@ -43,54 +55,85 @@ class NCSWidget {
         this.container = document.createElement('div');
         this.container.id = 'ncs-persistent-widget';
         
+        // 🎨 2. Application du thème (Variables CSS dynamiques)
+        const isLight = this.options.theme === 'light';
+        const colors = {
+            bg: isLight ? '#ffffff' : '#181818',
+            text: isLight ? '#222222' : '#ffffff',
+            textMuted: isLight ? '#666666' : '#b3b3b3',
+            border: isLight ? '#e0e0e0' : '#282828',
+            panelBg: isLight ? '#f5f5f5' : '#282828',
+            sliderBg: isLight ? '#d3d3d3' : '#535353',
+            btnBg: isLight ? '#222222' : '#ffffff',
+            btnColor: isLight ? '#ffffff' : '#000000'
+        };
+
         const style = document.createElement('style');
         style.textContent = `
-            #ncs-persistent-widget { position: fixed; ${this.getPositionStyles()} z-index: 99999; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-            .ncs-minimized { width: 55px; height: 55px; border-radius: 50%; background: linear-gradient(135deg, #1DB954, #1ed760); cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 15px rgba(29, 185, 84, 0.4); font-size: 24px; transition: transform 0.2s; }
+            #ncs-persistent-widget {
+                /* Variables CSS exposées pour les développeurs */
+                --ncs-primary: ${this.options.primaryColor};
+                --ncs-bg: ${colors.bg};
+                --ncs-text: ${colors.text};
+                --ncs-text-muted: ${colors.textMuted};
+                --ncs-border: ${colors.border};
+                --ncs-panel-bg: ${colors.panelBg};
+                --ncs-slider-bg: ${colors.sliderBg};
+                --ncs-btn-bg: ${colors.btnBg};
+                --ncs-btn-color: ${colors.btnColor};
+                
+                position: fixed;
+                ${this.getPositionStyles()}
+                z-index: ${this.options.zIndex};
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .ncs-minimized { width: 55px; height: 55px; border-radius: 50%; background: var(--ncs-primary); cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0, 0.2); font-size: 24px; transition: transform 0.2s; color: white; }
             .ncs-minimized:hover { transform: scale(1.1); }
             .ncs-minimized.hidden { display: none; }
             
-            .ncs-expanded { width: 320px; background: #181818; color: white; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; border: 1px solid #282828; }
+            .ncs-expanded { width: 320px; background: var(--ncs-bg); color: var(--ncs-text); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; border: 1px solid var(--ncs-border); }
             .ncs-expanded.active { display: block; animation: ncsFadeIn 0.3s ease; }
             
             .ncs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-            .ncs-header strong { font-size: 14px; font-weight: 600; color: #b3b3b3; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-            .ncs-close-btn { background: transparent; border: none; color: #b3b3b3; font-size: 18px; cursor: pointer; padding: 0; transition: color 0.2s; }
-            .ncs-close-btn:hover { color: white; }
+            .ncs-header strong { font-size: 14px; font-weight: 600; color: var(--ncs-text-muted); letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+            .ncs-close-btn { background: transparent; border: none; color: var(--ncs-text-muted); font-size: 18px; cursor: pointer; padding: 0; transition: color 0.2s; }
+            .ncs-close-btn:hover { color: var(--ncs-text); }
             
             .ncs-visualizer { display: flex; gap: 2px; height: 12px; align-items: flex-end; opacity: 0; transition: opacity 0.3s; }
             .ncs-visualizer.playing { opacity: 1; }
-            .ncs-bar { width: 3px; background: #1DB954; border-radius: 2px; animation: bounce 0.5s infinite alternate; }
+            .ncs-bar { width: 3px; background: var(--ncs-primary); border-radius: 2px; animation: bounce 0.5s infinite alternate; }
             .ncs-bar:nth-child(2) { animation-delay: 0.15s; }
             .ncs-bar:nth-child(3) { animation-delay: 0.3s; }
             @keyframes bounce { from { height: 3px; } to { height: 12px; } }
             
             .ncs-track-info { display: flex; align-items: center; margin-bottom: 15px; }
-            .ncs-cover { width: 65px; height: 65px; border-radius: 8px; background: #282828; margin-right: 15px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+            .ncs-cover { width: 65px; height: 65px; border-radius: 8px; background: var(--ncs-panel-bg); margin-right: 15px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
             .ncs-details { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
-            #ncs-track-name { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-            #ncs-artists { font-size: 11px; color: #a0a0a0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
-            #ncs-genre { width: 100%; padding: 4px 8px; background: #282828; color: #b3b3b3; border: 1px solid #333; border-radius: 4px; font-size: 12px; cursor: pointer; outline: none; }
+            #ncs-track-name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+            #ncs-artists { font-size: 11px; color: var(--ncs-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px; }
+            #ncs-genre { width: 100%; padding: 4px 8px; background: var(--ncs-panel-bg); color: var(--ncs-text); border: 1px solid var(--ncs-border); border-radius: 6px; font-size: 12px; cursor: pointer; outline: none; }
             
-            .ncs-progress-container { margin-bottom: 15px; display:flex; align-items:center; gap: 10px; font-size: 11px; color: #b3b3b3; }
-            .ncs-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #535353; border-radius: 2px; outline: none; cursor: pointer; }
-            .ncs-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #1DB954; cursor: pointer; transition: transform 0.1s; }
+            .ncs-progress-container { margin-bottom: 15px; display:flex; align-items:center; gap: 10px; font-size: 11px; color: var(--ncs-text-muted); font-variant-numeric: tabular-nums; }
+            .ncs-slider { -webkit-appearance: none; width: 100%; height: 4px; background: var(--ncs-slider-bg); border-radius: 2px; outline: none; cursor: pointer; }
+            .ncs-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--ncs-primary); cursor: pointer; transition: transform 0.1s; }
             .ncs-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
             
             .ncs-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 15px; }
-            .ncs-btn-circle { width: 50px; height: 50px; border-radius: 50%; background: white; color: black; border: none; font-size: 20px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: transform 0.2s; padding-left: 4px; }
+            .ncs-btn-circle { width: 50px; height: 50px; border-radius: 50%; background: var(--ncs-btn-bg); color: var(--ncs-btn-color); border: none; font-size: 20px; cursor: pointer; display:flex; justify-content:center; align-items:center; transition: transform 0.2s; padding-left: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
             .ncs-btn-circle.paused { padding-left: 0; }
             .ncs-btn-circle:hover { transform: scale(1.05); }
-            .ncs-btn-icon { background: transparent; border: none; color: #b3b3b3; font-size: 20px; cursor: pointer; transition: color 0.2s; padding: 5px; }
-            .ncs-btn-icon:hover { color: white; }
-            .ncs-btn-icon:disabled { color: #333; cursor: not-allowed; }
+            .ncs-btn-icon { background: transparent; border: none; color: var(--ncs-text-muted); font-size: 20px; cursor: pointer; transition: color 0.2s; padding: 5px; }
+            .ncs-btn-icon:hover { color: var(--ncs-text); }
+            .ncs-btn-icon:disabled { color: var(--ncs-border); cursor: not-allowed; }
             
             .ncs-bottom-bar { display: flex; justify-content: space-between; align-items: center; }
-            .ncs-volume-container { display: flex; align-items: center; gap: 8px; color: #b3b3b3; flex: 1; margin-right: 15px; }
+            .ncs-volume-container { display: flex; align-items: center; gap: 8px; color: var(--ncs-text-muted); flex: 1; margin-right: 15px; }
             #ncs-mute-btn { cursor: pointer; transition: transform 0.1s; user-select: none; }
             #ncs-mute-btn:hover { transform: scale(1.1); }
-            .ncs-download-btn { color: #b3b3b3; text-decoration: none; font-size: 18px; transition: color 0.2s; }
-            .ncs-download-btn:hover { color: #1DB954; }
+            .ncs-download-btn { color: var(--ncs-text-muted); text-decoration: none; font-size: 18px; transition: color 0.2s; }
+            .ncs-download-btn:hover { color: var(--ncs-primary); }
             
             @keyframes ncsFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         `;
@@ -113,11 +156,16 @@ class NCSWidget {
                         <div id="ncs-track-name">Chargement...</div>
                         <div id="ncs-artists">Artiste(s)</div>
                         <select id="ncs-genre">
-                            <option value="electronic">⚡ Électronique</option>
-                            <option value="house">🏠 House</option>
-                            <option value="chill">☕ Chill</option>
-                            <option value="synthwave">🌆 Synthwave</option>
-                        </select>
+                            <option value="all">🌍 Tous les genres</option>
+                            <option value="31">Alternative Dance</option>
+                            <option value="10">House</option>
+                            <option value="2">Chill</option>
+                            <option value="5">Dubstep</option>
+                            <option value="7">Electronic</option>
+                            <option value="3">Drum & Bass</option>
+                            <option value="9">Hardstyle</option>
+                            <option value="14">Trap</option>
+                            </select>
                     </div>
                 </div>
 
@@ -146,6 +194,7 @@ class NCSWidget {
         document.head.appendChild(style);
         document.body.appendChild(this.container);
 
+        // Références
         this.minimized = this.container.querySelector('.ncs-minimized');
         this.expanded = this.container.querySelector('.ncs-expanded');
         this.playBtn = this.container.querySelector('#ncs-play-pause');
@@ -165,13 +214,14 @@ class NCSWidget {
     }
 
     getPositionStyles() {
+        const offset = this.options.offset;
         const positions = {
-            'bottom-right': 'bottom: 25px; right: 25px;',
-            'bottom-left': 'bottom: 25px; left: 25px;',
-            'top-right': 'top: 25px; right: 25px;',
-            'top-left': 'top: 25px; left: 25px;'
+            'bottom-right': `bottom: ${offset}; right: ${offset};`,
+            'bottom-left': `bottom: ${offset}; left: ${offset};`,
+            'top-right': `top: ${offset}; right: ${offset};`,
+            'top-left': `top: ${offset}; left: ${offset};`
         };
-        return positions[this.position] || positions['bottom-right'];
+        return positions[this.options.position] || positions['bottom-right'];
     }
 
     attachEvents() {
@@ -204,30 +254,26 @@ class NCSWidget {
 
         this.progressBar.addEventListener('input', (e) => { this.audio.currentTime = e.target.value; });
         
-        // --- NOUVEAU : GESTION DU MUTE ET DU VOLUME ---
         this.volumeBar.addEventListener('input', (e) => {
             const vol = parseFloat(e.target.value);
             this.audio.volume = vol;
-            if (vol > 0) this.lastVolume = vol; // On mémorise si c'est > 0
+            if (vol > 0) this.lastVolume = vol;
             this.updateMuteIcon(vol);
             localStorage.setItem('ncs_volume', vol);
         });
 
         this.muteBtn.addEventListener('click', () => {
             if (this.audio.volume > 0) {
-                // On Mute
                 this.lastVolume = this.audio.volume;
                 this.audio.volume = 0;
                 this.volumeBar.value = 0;
             } else {
-                // On Unmute
                 this.audio.volume = this.lastVolume || 1.0;
                 this.volumeBar.value = this.audio.volume;
             }
             this.updateMuteIcon(this.audio.volume);
             localStorage.setItem('ncs_volume', this.audio.volume);
         });
-        // ----------------------------------------------
 
         setInterval(() => {
             if (this.isPlaying && this.audio.currentTime > 0) {
@@ -283,7 +329,7 @@ class NCSWidget {
 
     async fetchSingleTrack(genre) {
         try {
-            const response = await fetch(`${this.apiUrl}/search?genre=${genre}`);
+            const response = await fetch(`${this.options.apiUrl}/search?genre=${genre}`);
             const data = await response.json();
             return (data && data.length > 0) ? data[0] : null;
         } catch (error) {
@@ -343,10 +389,9 @@ class NCSWidget {
         this.audio.src = track.audioUrl;
         this.trackName.innerText = track.title;
         
-        // Mettre à jour l'affichage des artistes
         const artistes = track.artists || "NCS Release";
         this.artistsName.innerText = artistes;
-        this.artistsName.title = artistes; // Bulle info au survol si le texte est long
+        this.artistsName.title = artistes;
         
         if (track.coverUrl) this.coverImg.src = track.coverUrl;
         this.downloadBtn.href = track.audioUrl;
