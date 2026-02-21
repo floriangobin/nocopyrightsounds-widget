@@ -2,23 +2,28 @@ import { ncsGenres } from './genres.js';
 
 class NCSWidget {
     constructor(userOptions = {}) {
-        // 🛠️ 1. Les TOUTES NOUVELLES options de personnalisation
         const defaultOptions = {
             position: 'bottom-right',
-            apiUrl: 'https://VOTRE-URL-RENDER.onrender.com', // ⚠️ METTEZ VOTRE URL RENDER ICI
+            apiUrl: 'https://ncs-backend-api.onrender.com', // 🔗 Votre API officielle fixée !
             theme: 'dark',
             primaryColor: '#1DB954',
             defaultGenre: 'all',
             startVolume: 0.5,
             offset: '25px',
             zIndex: 99999,
-            // --- NOUVEAUTÉS V1.2.0 ---
-            glassmorphism: false, // Active l'effet verre dépoli
-            borderRadius: '16px', // Arrondi des angles du panneau
+            glassmorphism: false,
+            borderRadius: '16px',
             fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-            hideDownload: false,  // Masquer le bouton de téléchargement
-            hideVisualizer: false,// Masquer les barres animées
-            autoOpen: false       // Ouvrir le widget par défaut à la 1ère visite
+            hideDownload: false,
+            hideVisualizer: false,
+            autoOpen: false,
+            
+            // --- 🎛️ NOUVEAUTÉS V1.3.0 : Bouton Réduit ---
+            minimizedIcon: '🎧',         // L'icône par défaut
+            minimizedSize: '55px',       // Taille du bouton
+            minimizedRadius: '50%',      // Arrondi (50% = rond, 10px = carré arrondi)
+            minimizedBg: null,           // Surcharger la couleur de fond (utilise primaryColor sinon)
+            minimizedColor: '#ffffff'    // Couleur de l'icône
         };
 
         this.options = { ...defaultOptions, ...userOptions };
@@ -43,7 +48,6 @@ class NCSWidget {
             this.savedTitle = localStorage.getItem('ncs_currentTitle') || null;
             this.savedArtists = localStorage.getItem('ncs_currentArtists') || null;
             
-            // Logique d'auto-ouverture : on priorise le choix sauvegardé, sinon l'option autoOpen
             const savedState = localStorage.getItem('ncs_isOpen');
             if (savedState !== null) {
                 this.isWidgetOpen = savedState === 'true';
@@ -71,8 +75,6 @@ class NCSWidget {
         this.container.id = 'ncs-persistent-widget';
         
         const isLight = this.options.theme === 'light';
-        
-        // 🎨 Gestion dynamique des couleurs pour le Glassmorphism
         const baseBgColor = isLight ? '255, 255, 255' : '24, 24, 24';
         const finalBg = this.options.glassmorphism ? `rgba(${baseBgColor}, 0.75)` : (isLight ? '#ffffff' : '#181818');
         const backdropFilter = this.options.glassmorphism ? 'blur(12px)' : 'none';
@@ -102,6 +104,12 @@ class NCSWidget {
                 --ncs-radius: ${this.options.borderRadius};
                 --ncs-font: ${this.options.fontFamily};
                 
+                /* Variables Bouton Réduit */
+                --ncs-min-size: ${this.options.minimizedSize};
+                --ncs-min-radius: ${this.options.minimizedRadius};
+                --ncs-min-bg: ${this.options.minimizedBg || this.options.primaryColor};
+                --ncs-min-color: ${this.options.minimizedColor};
+                
                 position: fixed;
                 ${this.getPositionStyles()}
                 z-index: ${this.options.zIndex};
@@ -109,8 +117,8 @@ class NCSWidget {
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
-            .ncs-minimized { width: 55px; height: 55px; border-radius: 50%; background: var(--ncs-primary); cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0, 0.2); font-size: 24px; transition: transform 0.2s; color: white; }
-            .ncs-minimized:hover { transform: scale(1.1); }
+            .ncs-minimized { width: var(--ncs-min-size); height: var(--ncs-min-size); border-radius: var(--ncs-min-radius); background: var(--ncs-min-bg); cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 6px 15px rgba(0,0,0, 0.2); font-size: calc(var(--ncs-min-size) * 0.45); transition: transform 0.2s; color: var(--ncs-min-color); }
+            .ncs-minimized:hover { transform: scale(1.05); }
             .ncs-minimized.hidden { display: none; }
             
             .ncs-expanded { width: 320px; background: var(--ncs-bg); color: var(--ncs-text); border-radius: var(--ncs-radius); padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; border: 1px solid var(--ncs-border); backdrop-filter: ${backdropFilter}; -webkit-backdrop-filter: ${backdropFilter}; }
@@ -121,7 +129,6 @@ class NCSWidget {
             .ncs-close-btn { background: transparent; border: none; color: var(--ncs-text-muted); font-size: 18px; cursor: pointer; padding: 0; transition: color 0.2s; }
             .ncs-close-btn:hover { color: var(--ncs-text); }
             
-            /* Masquage conditionnel du Visualizer */
             .ncs-visualizer { display: ${this.options.hideVisualizer ? 'none' : 'flex'}; gap: 2px; height: 12px; align-items: flex-end; opacity: 0; transition: opacity 0.3s; }
             .ncs-visualizer.playing { opacity: 1; }
             .ncs-bar { width: 3px; background: var(--ncs-primary); border-radius: 2px; animation: bounce 0.5s infinite alternate; }
@@ -154,7 +161,6 @@ class NCSWidget {
             #ncs-mute-btn { cursor: pointer; transition: transform 0.1s; user-select: none; }
             #ncs-mute-btn:hover { transform: scale(1.1); }
             
-            /* Masquage conditionnel du bouton Téléchargement */
             .ncs-download-btn { display: ${this.options.hideDownload ? 'none' : 'block'}; color: var(--ncs-text-muted); text-decoration: none; font-size: 18px; transition: color 0.2s; }
             .ncs-download-btn:hover { color: var(--ncs-primary); }
             
@@ -166,7 +172,7 @@ class NCSWidget {
         ).join('');
 
         this.container.innerHTML = `
-            <div class="ncs-minimized ${this.isWidgetOpen ? 'hidden' : ''}">🎧</div>
+            <div class="ncs-minimized ${this.isWidgetOpen ? 'hidden' : ''}">${this.options.minimizedIcon}</div>
             <div class="ncs-expanded ${this.isWidgetOpen ? 'active' : ''}">
                 <div class="ncs-header">
                     <strong>NCS Player
