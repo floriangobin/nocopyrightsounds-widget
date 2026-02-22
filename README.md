@@ -3,122 +3,154 @@
 [![NPM Version](https://img.shields.io/npm/v/nocopyrightsounds-widget.svg?style=flat-square&color=1DB954)](https://www.npmjs.com/package/nocopyrightsounds-widget)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-Un lecteur musical flottant, élégant et hautement personnalisable pour intégrer facilement les musiques libres de droits de **NoCopyrightSounds** à n'importe quel site web. 
+A sleek, floating, and **100% CSS-hackable** music player to easily integrate royalty-free music from **NoCopyrightSounds** into any website. 
 
-Conçu pour les développeurs modernes : léger, persistant entre les changements de pages, et entièrement paramétrable via JavaScript et CSS.
+Built for modern developers: lightweight, persistent across page reloads, and infinitely customizable.
 
-![NCS Widget Preview](https://raw.githubusercontent.com/floriangobin/nocopyrightsounds-widget/main/preview.png) *(Ajoutez une capture d'écran de votre widget dans votre dépôt GitHub et remplacez ce lien !)*
+![NCS Widget Preview](https://raw.githubusercontent.com/floriangobin/nocopyrightsounds-widget/main/preview.png)
 
 ---
 
-## ✨ Fonctionnalités
+## ✨ Features
 
-* ⚡ **Zéro Latence :** Algorithme de préchargement (buffering) en arrière-plan pour des transitions instantanées.
-* 💾 **Persistance d'état :** Mémorise la piste en cours, le volume, la progression et l'état du widget d'une page à l'autre via `localStorage`.
-* 🎨 **Design Premium & Glassmorphism :** Support natif des modes clair/sombre, personnalisation des couleurs et effet de verre dépoli.
-* 🎛️ **Contrôles Complets :** Boutons Suivant/Précédent avec historique, contrôle du volume, Mute, et barre de progression.
-* 🎵 **Catalogue Complet :** Navigation aléatoire intelligente parmi les 60+ genres historiques de NCS.
-* 🔘 **Bouton Réduit Sur Mesure :** Transformez l'icône flottante en cercle, en carré, changez l'émoji ou mettez-y du texte !
-* 🔌 **Prêt à l'emploi (Plug & Play) :** API backend officielle intégrée par défaut. Zéro configuration requise !
+* ⚡ **Zero Latency:** Smart background preloading (buffering) for instant track transitions.
+* 💾 **State Persistence:** Remembers the current track, volume, and playback progress across page navigation via `localStorage`.
+* 🎵 **Full Catalog:** Intelligent random navigation through 60+ historical NCS genres.
+* 🛠️ **Limitless Customization (v1.4.0):** The widget is a blank canvas! It exposes the album cover via the `--ncs-cover-img` CSS variable and dynamically injects state classes (`.ncs-is-playing`, `.ncs-is-open`). You can literally reshape the entire player using just CSS.
+* 🔌 **Plug & Play:** Official backend API integrated by default. Zero server configuration required.
 
 ---
 
 ## 📦 Installation
 
-### Via NPM (Recommandé pour React, Vue, Angular...)
+### Via NPM (React, Vue, Angular, Next.js...)
 \`\`\`bash
 npm install nocopyrightsounds-widget
 \`\`\`
 
-### Via CDN (Pour les sites HTML classiques / Vanilla JS)
+### Via CDN (HTML / Vanilla JS)
 \`\`\`html
 <script type="module">
   import NCSWidget from 'https://cdn.jsdelivr.net/npm/nocopyrightsounds-widget@latest/src/index.js';
+  const player = new NCSWidget();
 </script>
 \`\`\`
 
 ---
 
-## 🚀 Utilisation Rapide
+## ⚙️ Configuration (JS Options)
 
-### Exemple basique (Zéro configuration)
+You can pass an options object to the constructor to tweak the widget's behavior and default look:
+
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| \`position\` | String | \`'bottom-right'\` | Screen position (\`bottom-right\`, \`bottom-left\`, \`top-right\`, \`top-left\`). |
+| \`offsetX\` / \`offsetY\` | String | \`'25px'\` | Margin from the screen edges (e.g., \`'0px'\`). |
+| \`theme\` | String | \`'dark'\` | Base UI theme (\`'dark'\` or \`'light'\`). |
+| \`primaryColor\` | String | \`'#1DB954'\` | Main accent color (sliders, active states). |
+| \`glassmorphism\`| Boolean| \`false\` | Enables a semi-transparent blurred background. |
+| \`hideDownload\` | Boolean| \`false\` | Hides the direct MP3 download icon. |
+| \`autoOpen\` | Boolean| \`false\` | Automatically opens the widget on the user's first visit. |
+| \`defaultGenre\` | String | \`'all'\` | Starting genre ID (e.g., \`'10'\` for House). |
+| \`minWidth\` / \`minHeight\` | String | \`'55px'\` | Dimensions of the minimized button. |
+| \`minimizedIcon\`| String | \`'🎧'\` | Text or emoji inside the minimized button. |
+
+---
+
+## 🎨 CSS Cookbook: The "Spinning Vinyl" Example
+
+To show you just how far you can push the customization, here is an example of the creative freedom this widget offers. By combining our JS options and a bit of custom CSS, you can completely transform the standard rectangular player into a **spinning interactive vinyl record**!
+
+### 1. The JavaScript Setup
+First, stick the widget to the corner and make it a square:
 \`\`\`html
 <script type="module">
-    import NCSWidget from 'https://cdn.jsdelivr.net/npm/nocopyrightsounds-widget@latest/src/index.js';
-    
-    // Le widget s'occupe de tout avec les paramètres par défaut !
-    const player = new NCSWidget();
+  import NCSWidget from 'https://cdn.jsdelivr.net/npm/nocopyrightsounds-widget@1.4.0/src/index.js';
+
+  new NCSWidget({
+    position: 'bottom-right',
+    offsetX: '0px', 
+    offsetY: '0px',
+    minWidth: '120px', 
+    minHeight: '120px',
+    minimizedIcon: '' // Remove the text to leave room for the cover art
+  });
 </script>
 \`\`\`
 
-### Exemple Avancé (Design sur mesure)
-\`\`\`javascript
-const widget = new NCSWidget({
-    position: 'bottom-left', 
-    theme: 'dark',           
-    primaryColor: '#ff0055', 
-    glassmorphism: true,     
-    borderRadius: '12px',    
-    defaultGenre: '10',      // Démarre sur la House (ID: 10)
-    
-    // 🔥 Personnalisation du bouton réduit
-    minimizedIcon: '🎵 Play',    // Texte au lieu d'un émoji
-    minimizedSize: '80px',       // Bouton plus large
-    minimizedRadius: '12px',     // Bords arrondis (au lieu d'un cercle parfait)
-    minimizedBg: '#222222',      // Fond sombre
-    minimizedColor: '#ff0055'    // Texte coloré
-});
-\`\`\`
-
----
-
-## ⚙️ Configuration Détaillée (Options)
-
-| Option | Type | Défaut | Description |
-| :--- | :--- | :--- | :--- |
-| \`position\` | String | \`'bottom-right'\` | Position (\`bottom-right\`, \`bottom-left\`, \`top-right\`, \`top-left\`). |
-| \`offset\` | String | \`'25px'\` | Marge par rapport au bord de l'écran. |
-| \`theme\` | String | \`'dark'\` | Thème de base de l'interface (\`'dark'\` ou \`'light'\`). |
-| \`primaryColor\` | String | \`'#1DB954'\` | Couleur principale (Sliders, visualizer). |
-| \`glassmorphism\`| Boolean | \`false\` | Active un fond semi-transparent avec flou d'arrière-plan. |
-| \`borderRadius\` | String | \`'16px'\` | Rayon des bordures du lecteur étendu. |
-| \`fontFamily\` | String | \`'system-ui...'\`| Typographie utilisée dans tout le widget. |
-| \`minimizedIcon\`| String | \`'🎧'\` | Icône ou texte du bouton réduit. |
-| \`minimizedSize\`| String | \`'55px'\` | Largeur/Hauteur du bouton réduit. |
-| \`minimizedRadius\`| String| \`'50%'\` | Arrondi du bouton réduit (\`50%\` = rond, \`8px\` = carré arrondi). |
-| \`minimizedBg\`  | String | *primaryColor*| Couleur de fond spécifique au bouton réduit. |
-| \`minimizedColor\`| String| \`'#ffffff'\` | Couleur de l'icône/texte du bouton réduit. |
-| \`hideDownload\` | Boolean | \`false\` | Masque l'icône de téléchargement direct. |
-| \`hideVisualizer\`| Boolean | \`false\` | Masque les barres animées à côté du titre. |
-| \`autoOpen\` | Boolean | \`false\` | Déploie le widget automatiquement à la 1ère visite. |
-| \`defaultGenre\` | String | \`'all'\` | L'ID du genre au démarrage (ex: \`'10'\` pour House). |
-| \`startVolume\` | Number | \`0.5\` | Volume initial entre 0.0 et 1.0. |
-
----
-
-## 🎨 Personnalisation CSS Avancée
-
-Le widget expose des **Variables CSS** (Custom Properties) rattachées à l'ID `#ncs-persistent-widget`. Vous pouvez les surcharger directement dans la feuille de style de votre site :
+### 2. The CSS Magic
+Copy this code into your website's stylesheet. It uses the `--ncs-cover-img` variable and the `.ncs-is-playing` state class to create a spinning vinyl record that pops out into a full-screen player when clicked!
 
 \`\`\`css
-#ncs-persistent-widget {
-    --ncs-bg: #000000;          /* Fond du widget */
-    --ncs-border: #333333;      /* Couleur de la bordure */
-    --ncs-panel-bg: #111111;    /* Fond des listes et des images */
+/* --- THE QUARTER VINYL (Minimized State) --- */
+.ncs-minimized {
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: hidden !important; 
+  position: relative;
+  box-shadow: none !important;
 }
+
+.ncs-minimized::before {
+  content: '';
+  position: absolute;
+  width: 200%; height: 200%; top: 0; left: 0;
+  border-radius: 50%;
+  background-image: radial-gradient(circle at center, #1e1e2f 0%, #1e1e2f 8%, rgba(0,0,0,0.8) 8.5%, #181818 9%, #181818 25%, transparent 25.5%, transparent 90%, #333 90.5%, #181818 91%, #181818 100%), var(--ncs-cover-img);
+  background-size: cover; background-position: center;
+  transform-origin: center center;
+}
+
+/* Spin animation when music plays */
+@keyframes spin { 100% { transform: rotate(360deg); } }
+#ncs-persistent-widget.ncs-is-playing:not(.ncs-is-open) .ncs-minimized::before {
+  animation: spin 4s linear infinite;
+}
+#ncs-persistent-widget:not(.ncs-is-open) .ncs-minimized:hover::before { cursor: pointer; filter: brightness(1.15); }
+
+/* --- THE FULL VINYL (Expanded State) --- */
+.ncs-expanded {
+  width: 360px !important; height: 360px !important;
+  border-radius: 50% !important; padding: 30px !important;
+  background: transparent !important; border: none !important;
+  transform-origin: bottom right;
+  display: flex !important; flex-direction: column; justify-content: center; align-items: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8) !important;
+}
+
+/* The animated vinyl background */
+.ncs-expanded::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; z-index: -2;
+  background-image: radial-gradient(circle at center, #1e1e2f 0%, #1e1e2f 3%, rgba(0,0,0,0.8) 3.5%, rgba(24,24,24, 0.95) 4%, rgba(24,24,24, 0.9) 35%, transparent 35.5%, transparent 85%, #333 85.5%, #181818 86%, #181818 100%), var(--ncs-cover-img);
+  background-size: cover; background-position: center;
+}
+#ncs-persistent-widget.ncs-is-playing .ncs-expanded::before { animation: spin 10s linear infinite; }
+
+/* Dark overlay for text readability */
+.ncs-expanded::after { content: ''; position: absolute; inset: 0; border-radius: 50%; z-index: -1; background: radial-gradient(circle at center, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.2) 100%); pointer-events: none; }
+
+/* Open/Close Animation */
+.ncs-expanded:not(.active) { transform: scale(0) rotate(-90deg) !important; opacity: 0; pointer-events: none; }
+.ncs-expanded.active { transform: scale(1) rotate(0deg) !important; opacity: 1; }
+
+/* Reorganize internal elements for the circular layout */
+.ncs-header, .ncs-track-info, .ncs-progress-container, .ncs-controls, .ncs-bottom-bar { position: relative; z-index: 1; width: 100%; }
+.ncs-header strong, .ncs-cover, .ncs-download-btn { display: none !important; }
+.ncs-header { position: absolute; top: 35px; right: 50px; justify-content: flex-end !important; }
+.ncs-close-btn { background: rgba(255,255,255,0.1) !important; color: white !important; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+.ncs-details { text-align: center; display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
+#ncs-track-name { font-size: 18px !important; color: white !important; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 0 !important; }
+#ncs-artists { font-size: 13px !important; color: #ccc !important; }
+#ncs-genre { max-width: 160px; margin-top: 10px; background: rgba(0,0,0,0.6) !important; color: white !important; border: 1px solid rgba(255,255,255,0.2) !important; border-radius: 20px !important; padding: 6px 15px !important; font-size: 12px !important; text-align: center; }
+.ncs-controls { margin: 15px 0 !important; gap: 20px !important; }
+.ncs-btn-circle { width: 60px !important; height: 60px !important; background: white !important; color: black !important; }
+.ncs-progress-container { width: 80% !important; margin: 0 auto 15px auto !important; }
+.ncs-bottom-bar { width: 60% !important; margin: 0 auto !important; justify-content: center !important; }
 \`\`\`
 
 ---
 
-## 🏗️ Architecture & Backend
+## 📄 License
 
-En raison des restrictions CORS strictes sur le web moderne, un navigateur web ne peut pas interroger directement le site de NCS. Ce widget s'appuie donc sur une API Backend Node.js.
-**Une instance publique hébergée sur Render est configurée par défaut dans le widget pour un usage "Plug & Play".**
-
----
-
-## 📄 Licence
-
-Distribué sous la licence MIT. Voir `LICENSE` pour plus d'informations.
-
-**Avertissement :** Ce projet n'est pas affilié à NoCopyrightSounds. Toutes les musiques diffusées appartiennent à leurs créateurs respectifs et à NCS.
+Distributed under the MIT License. 
+**Disclaimer:** This project is not affiliated with NoCopyrightSounds. All streamed music belongs to their respective creators and NCS.
