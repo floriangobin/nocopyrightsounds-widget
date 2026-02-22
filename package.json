@@ -1,6 +1,6 @@
 {
   "name": "nocopyrightsounds-widget",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A sleek, floating, and 100% CSS-hackable music player for NCS.",
   "main": "src/index.js",
   "repository": {

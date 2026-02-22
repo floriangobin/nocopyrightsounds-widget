@@ -180,7 +180,3 @@ Copy this code into your website's stylesheet. It uses the `--ncs-cover-img` var
 Distributed under the MIT License.
 
 This project is not affiliated with NoCopyrightSounds. All streamed music belongs to their respective creators and NCS. Please respect the NCS usage policy when using their tracks.
-
-```
-
-```
