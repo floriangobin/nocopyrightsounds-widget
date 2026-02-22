@@ -1,56 +1,14 @@
-nocopyrightsounds-widget
-
-A sleek, floating, and 100% CSS-hackable music player to easily integrate royalty-free music from NoCopyrightSounds into any website.
-
-Designed for modern developers: lightweight, persistent across page reloads, and infinitely customizable.
-
-Features
-
-Zero Latency: Smart background preloading for instant track transitions.
-
-State Persistence: Remembers the current track, volume, and playback progress via localStorage.
-
-Full Catalog: Intelligent random navigation through 60+ historical NCS genres.
-
-Limitless Customization: The widget is a blank canvas. It exposes the album cover via CSS variables and dynamically injects state classes. You can reshape the entire player using just CSS.
-
-Plug & Play: Official backend proxy API integrated by default. Zero server configuration required.
-
-Installation
-
-Via NPM (React, Vue, Next.js, etc.)
-
-npm install nocopyrightsounds-widget
-
-
-Via CDN (Vanilla JS / HTML)
-
-<script type="module">
+nocopyrightsounds-widgetA sleek, floating, and 100% CSS-hackable music player to easily integrate royalty-free music from NoCopyrightSounds into any website.Designed for modern developers: lightweight, persistent across page reloads, and infinitely customizable.FeaturesZero Latency: Smart background preloading for instant track transitions.State Persistence: Remembers the current track, volume, and playback progress via localStorage.Full Catalog: Intelligent random navigation through 60+ historical NCS genres.Limitless Customization: The widget is a blank canvas. It exposes the album cover via CSS variables and dynamically injects state classes. You can reshape the entire player using just CSS.Plug & Play: Official backend proxy API integrated by default. Zero server configuration required.InstallationVia NPM (React, Vue, Next.js, etc.)npm install nocopyrightsounds-widget
+Via CDN (Vanilla JS / HTML)<script type="module">
   import NCSWidget from 'https://cdn.jsdelivr.net/npm/nocopyrightsounds-widget@latest/src/index.js';
 </script>
-
-
-Import
-
-// ES Module (recommended)
+Import// ES Module (recommended)
 import NCSWidget from 'nocopyrightsounds-widget'
-
-
-Examples
-
-Basic Initialization
-
-import NCSWidget from 'nocopyrightsounds-widget'
+ExamplesBasic Initializationimport NCSWidget from 'nocopyrightsounds-widget'
 
 // The widget handles everything with default settings
 const player = new NCSWidget()
-
-
-Advanced Configuration (Options)
-
-You can pass an options object to tweak the widget's behavior and default look:
-
-import NCSWidget from 'nocopyrightsounds-widget'
+Advanced Configuration (Options)You can pass an options object to tweak the widget's behavior and default look:import NCSWidget from 'nocopyrightsounds-widget'
 
 const widget = new NCSWidget({
     position: 'bottom-right', // 'bottom-left', 'top-right', 'top-left'
@@ -67,17 +25,7 @@ const widget = new NCSWidget({
     minHeight: '55px',        // Height of the minimized button
     minimizedIcon: '🎵'       // Emoji or Text for the minimized button
 })
-
-
-CSS Cookbook: The "Spinning Vinyl"
-
-To show you just how far you can push the customization, here is an example. By combining the JS options and custom CSS, you can completely transform the standard rectangular player into a spinning interactive vinyl record!
-
-1. The JavaScript Setup
-
-First, stick the widget to the corner and make it a square:
-
-import NCSWidget from 'nocopyrightsounds-widget'
+CSS Cookbook: The "Spinning Vinyl"To show you just how far you can push the customization, here is an example. By combining the JS options and custom CSS, you can completely transform the standard rectangular player into a spinning interactive vinyl record!1. The JavaScript SetupFirst, stick the widget to the corner and make it a square:import NCSWidget from 'nocopyrightsounds-widget'
 
 new NCSWidget({
   position: 'bottom-right',
@@ -87,13 +35,7 @@ new NCSWidget({
   minHeight: '120px',
   minimizedIcon: '' // Remove the text to leave room for the cover art
 });
-
-
-2. The CSS Magic
-
-Copy this code into your website's stylesheet. It uses the --ncs-cover-img variable and the .ncs-is-playing state class to create a spinning vinyl record that pops out into a full-screen player when clicked!
-
-/* --- THE QUARTER VINYL (Minimized State) --- */
+2. The CSS MagicCopy this code into your website's stylesheet. It uses the --ncs-cover-img variable and the .ncs-is-playing state class to create a spinning vinyl record that pops out into a full-screen player when clicked!/* --- THE QUARTER VINYL (Minimized State) --- */
 .ncs-minimized {
   border-radius: 0 !important;
   background: transparent !important;
@@ -157,10 +99,4 @@ Copy this code into your website's stylesheet. It uses the --ncs-cover-img varia
 .ncs-btn-circle { width: 60px !important; height: 60px !important; background: white !important; color: black !important; }
 .ncs-progress-container { width: 80% !important; margin: 0 auto 15px auto !important; }
 .ncs-bottom-bar { width: 60% !important; margin: 0 auto !important; justify-content: center !important; }
-
-
-Disclaimer & License
-
-Distributed under the MIT License.
-
-This project is not affiliated with NoCopyrightSounds. All streamed music belongs to their respective creators and NCS. Please respect the NCS usage policy when using their tracks.
+Disclaimer & LicenseDistributed under the MIT License.This project is not affiliated with NoCopyrightSounds. All streamed music belongs to their respective creators and NCS. Please respect the NCS usage policy when using their tracks.
